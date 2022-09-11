@@ -1,4 +1,5 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -13,7 +14,9 @@ import TextField from '@mui/material/TextField';
 import * as React from 'react';
 import { useState } from 'react';
 import { categories } from '../utils/categories';
-import { addEntry } from '../utils/mutations';
+import { addEntry, updateEntry, deleteEntry } from '../utils/mutations';
+
+import Confirm from './Confirm';
 
 // Modal component for individual entries.
 
@@ -36,6 +39,8 @@ export default function EntryModal({ entry, type, user }) {
    const [description, setDescription] = useState(entry.description);
    const [category, setCategory] = React.useState(entry.category);
 
+   const [confirmOpen, setConfirmOpen] = useState(false);
+
    // Modal visibility handlers
 
    const handleClickOpen = () => {
@@ -57,7 +62,7 @@ export default function EntryModal({ entry, type, user }) {
          name: name,
          link: link,
          description: description,
-         user: user?.displayName ? user?.displayName : "GenericUser",
+         user: user?.displayName,
          category: category,
          userid: user?.uid,
       };
@@ -67,26 +72,47 @@ export default function EntryModal({ entry, type, user }) {
    };
 
    // TODO: Add Edit Mutation Handler
+   const handleEdit = () => {
+      // update values
+      entry.name = name
+      entry.link = link
+      entry.description = description
+      entry.category = category
+
+      updateEntry(entry).catch(console.error);
+      handleClose();
+   }
 
    // TODO: Add Delete Mutation Handler
+   const handleDelete = () => {
+      // confirm deletion
+      setConfirmOpen(true);
+   }
+
+   const handleDeleteConfirm = () => {
+      deleteEntry(entry).catch(console.error);
+      setConfirmOpen(false);
+   }
+
+   const handleDeleteClose = () => {
+      setConfirmOpen(false);
+   }
 
    // Button handlers for modal opening and inside-modal actions.
    // These buttons are displayed conditionally based on if adding or editing/opening.
    // TODO: You may have to edit these buttons to implement editing/deleting functionality.
 
    const openButton =
-      type === "edit" ? <IconButton onClick={handleClickOpen}>
-         <OpenInNewIcon />
-      </IconButton>
-         : type === "add" ? <Button variant="contained" onClick={handleClickOpen}>
-            Add entry
-         </Button>
-            : null;
+      type === "edit" ? <IconButton onClick={handleClickOpen}><OpenInNewIcon /></IconButton>
+         : type === "delete" ? <IconButton onClick={handleDelete}><DeleteIcon /></IconButton>
+            : type === "add" ? <Button variant="contained" onClick={handleClickOpen}>Add entry</Button>
+               : null;
 
    const actionButtons =
       type === "edit" ?
          <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
+            <Button variant="contained" onClick={handleEdit}>Save Entry</Button>
          </DialogActions>
          : type === "add" ?
             <DialogActions>
@@ -94,6 +120,15 @@ export default function EntryModal({ entry, type, user }) {
                <Button variant="contained" onClick={handleAdd}>Add Entry</Button>
             </DialogActions>
             : null;
+
+   const confirmDelete =
+      <Confirm
+         title="Do you really want to delete this entry?"
+         open={confirmOpen}
+         confirmAction={handleDeleteConfirm}
+         cancelAction={handleDeleteClose}
+         cancelTitle="Cancel"
+         confirmTitle="Delete" />;
 
    return (
       <div>
@@ -148,6 +183,7 @@ export default function EntryModal({ entry, type, user }) {
             </DialogContent>
             {actionButtons}
          </Dialog>
+         {confirmDelete}
       </div>
    );
 }
