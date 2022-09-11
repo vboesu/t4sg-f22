@@ -38,9 +38,14 @@ export default function EntryTable({ entries }) {
       const sort_fn =
          order === "asc" ? (a, b) => a[key].localeCompare(b[key])
             : order === "desc" ? (a, b) => b[key].localeCompare(a[key])
-               : null;
+               : undefined;
 
       setSorted(entries.sort(sort_fn));
+   }
+
+   // this is needed to update on add/delete when sorted
+   if (sortKey && entries.length != sortedEntries.length) {
+      sortEntries(sortKey, sortOrder);
    }
 
    return (
